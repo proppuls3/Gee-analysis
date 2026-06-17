@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UAE Villa Renovation ROI & Prospecting Platform</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Leaflet CSS & JS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    
+    <!-- Leaflet Draw CSS & JS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css"/>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        
+        <!-- Header -->
+        <header class="app-header">
+            <div class="logo-area">
+                <i class="fa-solid fa-satellite-dish brand-icon"></i>
+                <div class="brand-text">
+                    <h1>RENOPROSPECT</h1>
+                    <span class="sub-brand">UAE Villa ROI & Ad Targeting Engine</span>
+                </div>
+            </div>
+            <div class="header-actions">
+                <div id="connection-badge" class="badge badge-warning">
+                    <i class="fa-solid fa-triangle-exclamation"></i> Connecting...
+                </div>
+                <button id="btn-settings" class="icon-btn" title="Authentication Settings">
+                    <i class="fa-solid fa-gear"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Body Grid -->
+        <div class="main-layout">
+            
+            <!-- Left Control Panel -->
+            <aside class="sidebar-left">
+                <div class="panel-card">
+                    <h2 class="panel-title"><i class="fa-solid fa-sliders"></i> Control Center</h2>
+                    
+                    <!-- Community Selector -->
+                    <div class="input-group">
+                        <label for="select-community">Target Community</label>
+                        <select id="select-community">
+                            <!-- Populated dynamically -->
+                        </select>
+                    </div>
+
+                    <!-- Custom ROI Draw Instruction -->
+                    <div class="draw-helper">
+                        <span>Or, use drawing tools on map for custom ROI</span>
+                    </div>
+
+                    <!-- Date Ranges -->
+                    <div class="date-range-container">
+                        <div class="date-period">
+                            <span class="period-title">Baseline ("Before")</span>
+                            <div class="input-group">
+                                <label for="before-start">Start Date</label>
+                                <input type="date" id="before-start" value="2021-01-01">
+                            </div>
+                            <div class="input-group">
+                                <label for="before-end">End Date</label>
+                                <input type="date" id="before-end" value="2021-12-31">
+                            </div>
+                        </div>
+
+                        <div class="date-period">
+                            <span class="period-title">Comparison ("After")</span>
+                            <div class="input-group">
+                                <label for="after-start">Start Date</label>
+                                <input type="date" id="after-start" value="2024-01-01">
+                            </div>
+                            <div class="input-group">
+                                <label for="after-end">End Date</label>
+                                <input type="date" id="after-end" value="2024-12-31">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sensitivity Slider -->
+                    <div class="input-group">
+                        <div class="slider-header">
+                            <label for="range-sensitivity">Detection Sensitivity</label>
+                            <span id="sensitivity-value">5</span>
+                        </div>
+                        <input type="range" id="range-sensitivity" min="1" max="10" value="5" step="1">
+                        <span class="slider-helper">Higher sensitivity catches smaller changes but may increase noise.</span>
+                    </div>
+
+                    <!-- Action Button -->
+                    <button id="btn-run-analysis" class="btn btn-primary btn-glow">
+                        <i class="fa-solid fa-play"></i> Run GEE Analysis
+                    </button>
+                </div>
+                
+                <!-- Map Comparison Controls -->
+                <div class="panel-card comparison-controls-card">
+                    <h3 class="card-subtitle"><i class="fa-solid fa-images"></i> Map Layer Controls</h3>
+                    <div class="layer-toggle-group">
+                        <button id="btn-layer-before" class="layer-tab active">Before S2</button>
+                        <button id="btn-layer-after" class="layer-tab">After S2</button>
+                        <button id="btn-layer-change" class="layer-tab">Change Mask</button>
+                    </div>
+                    <div class="opacity-container">
+                        <label for="layer-opacity">Change Overlay Opacity</label>
+                        <input type="range" id="layer-opacity" min="0" max="100" value="80">
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Map View Area -->
+            <main class="map-view-container">
+                <div id="map"></div>
+                
+                <!-- Floating Map Controls -->
+                <div class="map-legend">
+                    <h4>GEE Changes</h4>
+                    <div class="legend-item"><span class="legend-color color-veg"></span> Vegetation Loss</div>
+                    <div class="legend-item"><span class="legend-color color-pool"></span> Pool Added</div>
+                    <div class="legend-item"><span class="legend-color color-ext"></span> Building Extension</div>
+                </div>
+            </main>
+
+            <!-- Right Analytics Panel -->
+            <aside class="sidebar-right">
+                <div class="panel-card scroll-card">
+                    <h2 class="panel-title"><i class="fa-solid fa-chart-line"></i> ROI Analytics</h2>
+                    
+                    <!-- Stats Grid -->
+                    <div class="stats-grid">
+                        <div class="stat-box" style="grid-column: 1 / -1; background: var(--bg-tertiary);">
+                            <span class="stat-label">Master Developer</span>
+                            <span id="stat-developer" class="stat-number" style="font-size: 1.25rem;">-</span>
+                        </div>
+                        <div class="stat-box">
+                            <span class="stat-label">Prospects</span>
+                            <span id="stat-prospects" class="stat-number">-</span>
+                        </div>
+                        <div class="stat-box">
+                            <span class="stat-label">Avg ROI Lift</span>
+                            <span id="stat-roi" class="stat-number">-</span>
+                        </div>
+                        <div class="stat-box">
+                            <span class="stat-label">Est. Value Added</span>
+                            <span id="stat-value" class="stat-number">-</span>
+                        </div>
+                    </div>
+
+                    <div class="divider"></div>
+
+                    <!-- Renovation Breakdown -->
+                    <div class="analysis-section">
+                        <h3><i class="fa-solid fa-tags"></i> Investment Breakdown</h3>
+                        <div id="roi-breakdown-container">
+                            <!-- Populated dynamically -->
+                            <p class="placeholder-text">Run analysis to see breakdown</p>
+                        </div>
+                    </div>
+
+                    <div class="divider"></div>
+
+                    <!-- Ad Copy Generator -->
+                    <div class="analysis-section ad-copy-section">
+                        <h3><i class="fa-solid fa-rectangle-ad"></i> AI Ad Campaign Copy</h3>
+                        <p class="section-desc">Copy optimized for targeting neighbors/owners in this community based on DLD ROI data.</p>
+                        <div id="ad-copy-container">
+                            <div class="ad-copy-box">
+                                <span class="ad-platform"><i class="fa-brands fa-meta"></i> Meta / Instagram Ads</span>
+                                <p id="ad-text-meta" class="ad-text">Select a community and run analysis to generate localized, ROI-backed ad copywriting.</p>
+                                <button class="btn btn-secondary btn-sm copy-btn" data-target="ad-text-meta">
+                                    <i class="fa-solid fa-copy"></i> Copy Ad Text
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+        </div>
+
+        <!-- Bottom Leads Table / Detail Layout -->
+        <section class="bottom-layout">
+            <div class="leads-card">
+                <div class="leads-header">
+                    <h2><i class="fa-solid fa-database"></i> Prospect Leads Database</h2>
+                    <div class="leads-actions">
+                        <button id="btn-export-csv" class="btn btn-secondary">
+                            <i class="fa-solid fa-file-export"></i> Export CSV for Facebook Ads
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="table-container">
+                    <table id="leads-table">
+                        <thead>
+                            <tr>
+                                <th>Lead ID</th>
+                                <th>Address</th>
+                                <th>Coordinates</th>
+                                <th>Type</th>
+                                <th>DLD Baseline Price</th>
+                                <th>Resale Price</th>
+                                <th>Renovation ROI</th>
+                                <th>Confidence</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="leads-tbody">
+                            <tr>
+                                <td colspan="9" class="table-placeholder">
+                                    <i class="fa-solid fa-compass-drafting animate-pulse"></i> Select a community and click "Run GEE Analysis" to search for modifications.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Lead Detailed Timeline View -->
+            <div id="timeline-card" class="timeline-card hidden">
+                <div class="timeline-header">
+                    <h3><i class="fa-solid fa-clock-rotate-left"></i> DLD & GEE Timeline: <span id="timeline-title">-</span></h3>
+                    <button id="btn-close-timeline" class="icon-btn-close">&times;</button>
+                </div>
+                <div class="timeline-body">
+                    <div class="timeline-wrapper">
+                        <!-- Step 1: Purchase -->
+                        <div class="timeline-step">
+                            <div class="step-marker"><i class="fa-solid fa-cart-shopping"></i></div>
+                            <div class="step-content">
+                                <span class="step-date" id="timeline-p-date">-</span>
+                                <h4>Villa Purchased (DLD Record)</h4>
+                                <p id="timeline-p-price">-</p>
+                                <span class="step-meta" id="timeline-p-meta">-</span>
+                            </div>
+                        </div>
+
+                        <!-- Step 2: Permit -->
+                        <div class="timeline-step">
+                            <div class="step-marker"><i class="fa-solid fa-file-signature"></i></div>
+                            <div class="step-content">
+                                <span class="step-date" id="timeline-permit-date">-</span>
+                                <h4>Permit Issued (Dubai Municipality)</h4>
+                                <p id="timeline-permit-type">-</p>
+                                <span class="step-meta" id="timeline-permit-meta">-</span>
+                            </div>
+                        </div>
+
+                        <!-- Step 3: Satellite Change -->
+                        <div class="timeline-step step-highlight">
+                            <div class="step-marker"><i class="fa-solid fa-satellite"></i></div>
+                            <div class="step-content">
+                                <span class="step-date" id="timeline-gee-date">-</span>
+                                <h4>GEE Modification Detection</h4>
+                                <p id="timeline-gee-desc">-</p>
+                                <span class="step-meta" id="timeline-gee-meta">-</span>
+                            </div>
+                        </div>
+
+                        <!-- Optional Step: DED License -->
+                        <div class="timeline-step hidden" id="step-ded">
+                            <div class="step-marker"><i class="fa-solid fa-briefcase"></i></div>
+                            <div class="step-content">
+                                <span class="step-date" id="timeline-ded-date">-</span>
+                                <h4>DED Commercial License Issued</h4>
+                                <p id="timeline-ded-desc">-</p>
+                                <span class="step-meta" id="timeline-ded-meta">-</span>
+                            </div>
+                        </div>
+
+                        <!-- Optional Step: Google Maps Pin -->
+                        <div class="timeline-step hidden" id="step-gmaps">
+                            <div class="step-marker"><i class="fa-solid fa-map-location-dot"></i></div>
+                            <div class="step-content">
+                                <span class="step-date" id="timeline-gmaps-date">-</span>
+                                <h4>Google Maps Business Detected</h4>
+                                <p id="timeline-gmaps-desc">-</p>
+                                <span class="step-meta" id="timeline-gmaps-meta">-</span>
+                            </div>
+                        </div>
+
+                        <!-- Step 4: Resale -->
+                        <div class="timeline-step">
+                            <div class="step-marker"><i class="fa-solid fa-handshake"></i></div>
+                            <div class="step-content">
+                                <span class="step-date" id="timeline-s-date">-</span>
+                                <h4>Villa Resold (DLD Record)</h4>
+                                <p id="timeline-s-price">-</p>
+                                <div class="roi-box" id="timeline-s-roi">-</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Credentials / Settings Modal -->
+        <div id="settings-modal" class="modal hidden">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Google Earth Engine Authentication</h2>
+                    <span class="close-modal">&times;</span>
+                </div>
+                <div class="modal-body">
+                    <p>To run live Sentinel-2 change detection, paste your **Google Earth Engine Service Account JSON Key** contents below. If empty, the system will run in **Demo Mode** using a pre-loaded database.</p>
+                    
+                    <div class="input-group">
+                        <label for="sa-key-input">Service Account JSON Key File Contents</label>
+                        <textarea id="sa-key-input" placeholder='{ "type": "service_account", "project_id": "...", "private_key": "...", "client_email": "..." }' rows="8"></textarea>
+                    </div>
+                    
+                    <div class="modal-actions">
+                        <button id="btn-save-key" class="btn btn-primary">Authenticate and Save</button>
+                        <button id="btn-clear-key" class="btn btn-secondary">Clear Saved Key</button>
+                    </div>
+                    <div id="modal-status" class="modal-status-text"></div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Custom App JS -->
+    <script src="app.js"></script>
+</body>
+</html>
